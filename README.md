@@ -84,20 +84,92 @@ It supports creating, updating, viewing, and deleting a user profile with valida
 
 ## Project Structure (Important Files Only)
 
-```txt
 src/
-  api/
-    mockProfileApi.ts      // Mock API calls (GET/POST/PUT/DELETE with Promises)
-  components/
-    Navbar.tsx             // Top navigation bar with links + user name
-  pages/
-    ProfileFormPage.tsx    // Form page (create / edit profile)
-    ProfilePage.tsx        // Profile display + delete
-    NotFoundPage.tsx       // 404 route
-  store/
-    store.ts               // Redux store configuration
-    profileSlice.ts        // Profile slice + async thunks
-  types/
-    profile.ts             // Profile interface
-  App.tsx                  // Routes + layout
-  main.tsx                 // React root, Redux Provider, Router, MUI theme
+├── api/
+│ └── mockProfileApi.ts
+├── components/
+│ └── Navbar.tsx
+├── pages/
+│ ├── ProfileFormPage.tsx
+│ ├── ProfilePage.tsx
+│ └── NotFoundPage.tsx
+├── store/
+│ ├── store.ts
+│ └── profileSlice.ts
+├── types/
+│ └── profile.ts
+├── App.tsx
+├── App.css
+├── index.css
+├── main.tsx
+
+---
+
+# ⚙ Installation & Setup
+
+### 1️⃣ Clone the repository
+```sh
+git clone https://github.com/akhileshnuth/profile-management-app
+
+2️⃣ Navigate to project folder
+cd profile-management-app
+
+3️⃣ Install dependencies
+npm install
+
+4️⃣ Start the app
+npm run dev
+
+5️⃣ Visit in browser
+
+http://localhost:5173
+
+Application Routing
+Route	Page
+/	Redirect → /profile
+/profile-form	Create / Edit Profile
+/profile	View Saved Profile
+/404	Not Found Page
+*	Wildcard → /404
+
+Form Validation Rules
+Field	Rule
+First Name	Required, min 2 chars
+Last Name	Required
+Email	Required, must be valid email
+Age	Optional, must be a number
+
+Error messages appear below the fields.
+
+Deployment (Vercel)
+
+The project is deployed on Vercel.
+
+Build Settings
+Setting	Value
+Framework	Vite
+Build Command	npm run build
+Output Directory	dist
+Live App
+
+https://profile-management-app-two.vercel.app
+
+👨‍💻 Author
+
+Akhilesh Nuthalapati
+GitHub → https://github.com/akhileshnuth
+
+Vercel → https://vercel.com/akhileshs-projects
+
+🎉 Thank You!
+
+This submission includes everything as per the assignment:
+
+✔ React + TypeScript
+✔ Form Validation
+✔ MUI Design
+✔ Redux Toolkit
+✔ LocalStorage
+✔ Mock API
+✔ Vercel Deployment
+✔ README Documentation
