@@ -124,7 +124,7 @@ npm run dev
 
 http://localhost:5173
 
-Application Routing
+- **Application Routing**
 Route	Page
 /	Redirect → /profile
 /profile-form	Create / Edit Profile
@@ -132,7 +132,7 @@ Route	Page
 /404	Not Found Page
 *	Wildcard → /404
 
-Form Validation Rules
+- **Form Validation Rules**
 Field	Rule
 First Name	Required, min 2 chars
 Last Name	Required
@@ -141,7 +141,7 @@ Age	Optional, must be a number
 
 Error messages appear below the fields.
 
-Deployment (Vercel)
+- **Deployment (Vercel)**
 
 The project is deployed on Vercel.
 
