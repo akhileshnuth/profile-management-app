@@ -108,3 +108,4 @@ src/
 # ⚙ Installation & Setup
 
 ### 1️⃣ Clone the repository
+git clone https://github.com/akhileshnuth/profile-management-app
