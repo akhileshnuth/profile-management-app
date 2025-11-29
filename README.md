@@ -4,6 +4,9 @@ A fully functional Profile Management App built using **React**, **TypeScript**,
 This application allows users to **create, edit, view, and delete** their profile with complete form validation and persistent storage.
 
 ---
+# Live App
+
+👉 https://profile-management-app-two.vercel.app
 
 ##  Tech Stack
 
@@ -95,3 +98,38 @@ http://localhost:5173
 /profile	View saved profile
 /404	Not found page
 *	Wildcard → /404
+## Form Validation Rules
+Field	Rule
+First Name	Required, 3+ characters
+Last Name	Optional
+Email	Required, must be valid email
+Age	Optional, must be numeric
+
+# Deployment (Vercel)
+This project is deployed on Vercel.
+
+## Build Settings
+Setting	Value: Framework	Vite
+Build Command:	npm run build
+Output Directory:	dist
+
+#👤 Author
+
+Akhilesh Nuthalapati
+🔗 GitHub: https://github.com/akhileshnuth
+🔗 Vercel Dashboard: https://vercel.com/akhileshs-projects
+
+## 🎉 Summary
+
+This project includes:
+
+✔ React + TypeScript
+✔ Material UI design
+✔ Redux Toolkit state management
+✔ LocalStorage persistence
+✔ Mock API
+✔ Advanced form validation
+✔ Routing + 404
+✔ Error handling
+✔ Vercel deployment
+✔ Full README documentation
