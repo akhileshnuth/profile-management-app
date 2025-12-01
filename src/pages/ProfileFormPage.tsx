@@ -1,73 +1,91 @@
 import { useEffect, useState } from "react";
 import {
-  Box,
-  TextField,
-  Button,
-  Typography,
-  Paper,
   Alert,
+  Box,
+  Button,
+  Paper,
   Stack,
+  TextField,
+  Typography,
 } from "@mui/material";
-import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { v4 as uuidv4 } from "uuid";
-import type { Profile } from "../types/profile";
-import type { AppDispatch } from "../store/store";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { saveProfile, clearError } from "../store/profileSlice";
+import type { Profile } from "../types/profile";
+
+type FieldErrors = {
+  firstName?: string;
+  email?: string;
+  age?: string;
+};
 
 export default function ProfileFormPage() {
-  const dispatch = useDispatch<AppDispatch>();
+  const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
-  const { data: existingProfile, loading, error } = useSelector(
-    (state: any) => state.profile
+  const { data: existingProfile, loading, error } = useAppSelector(
+    (state) => state.profile
   );
 
-  const [firstName, setFirstName] = useState(existingProfile?.firstName || "");
-  const [lastName, setLastName] = useState(existingProfile?.lastName || "");
-  const [email, setEmail] = useState(existingProfile?.email || "");
-  const [age, setAge] = useState(
-    existingProfile?.age !== undefined ? String(existingProfile.age) : ""
-  );
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [age, setAge] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [formMessage, setFormMessage] = useState<string | null>(null);
 
-  const [formError, setFormError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const isEditMode = !!existingProfile;
 
+  // Prefill form if profile exists
   useEffect(() => {
-    setFormError(null);
-    setSuccessMessage(null);
+    if (existingProfile) {
+      setFirstName(existingProfile.firstName ?? "");
+      setLastName(existingProfile.lastName ?? "");
+      setEmail(existingProfile.email ?? "");
+      setAge(
+        existingProfile.age !== undefined && existingProfile.age !== null
+          ? String(existingProfile.age)
+          : ""
+      );
+    }
+  }, [existingProfile]);
+
+  // Clear redux error when typing
+  useEffect(() => {
     if (error) {
       dispatch(clearError());
     }
-  }, [dispatch]);
+  }, [firstName, lastName, email, age, error, dispatch]);
 
   const validate = (): boolean => {
+    const errors: FieldErrors = {};
+
     if (!firstName.trim()) {
-      setFormError("First name is required.");
-      return false;
+      errors.firstName = "First name is required.";
+    } else if (firstName.trim().length < 3) {
+      errors.firstName = "First name must be at least 3 characters.";
     }
-    if (firstName.trim().length < 3) {
-      setFormError("First name must be at least 3 characters.");
-      return false;
-    }
+
     if (!email.trim()) {
-      setFormError("Email is required.");
-      return false;
+      errors.email = "Email is required.";
+    } else {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email.trim())) {
+        errors.email = "Please enter a valid email address.";
+      }
     }
-    const emailRegex = /\S+@\S+\.\S+/;
-    if (!emailRegex.test(email.trim())) {
-      setFormError("Please enter a valid email address.");
-      return false;
-    }
+
     if (age.trim() !== "") {
       const num = Number(age);
       if (Number.isNaN(num) || num <= 0) {
-        setFormError("Age must be a valid positive number.");
-        return false;
+        errors.age = "Age must be a valid positive number.";
       }
     }
-    setFormError(null);
-    return true;
+
+    setFieldErrors(errors);
+    setFormMessage(null);
+
+    return Object.keys(errors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -75,74 +93,99 @@ export default function ProfileFormPage() {
     if (!validate()) return;
 
     const payload: Profile = {
-      id: existingProfile?.id || uuidv4(),
       firstName: firstName.trim(),
-      lastName: lastName.trim(),
+      lastName: lastName.trim() || undefined,
       email: email.trim(),
-      age: age.trim() === "" ? undefined : Number(age.trim()),
+      age: age.trim() ? Number(age) : undefined,
     };
 
-    const resultAction = await dispatch(saveProfile(payload));
-
-    if (saveProfile.fulfilled.match(resultAction)) {
-      setSuccessMessage("Profile saved successfully!");
+    try {
+      await dispatch(saveProfile(payload)).unwrap();
+      setFormMessage(isEditMode ? "Profile updated successfully." : "Profile created successfully.");
+      // Redirect to profile page after a short delay
       setTimeout(() => {
         navigate("/profile");
-      }, 800);
-    } else {
-      setFormError(
-        (resultAction as any).payload || "Failed to save profile."
-      );
+      }, 500);
+    } catch (err) {
+      setFormMessage("Something went wrong while saving the profile.");
     }
   };
 
   return (
     <Box sx={{ mt: 4, display: "flex", justifyContent: "center" }}>
-      <Paper sx={{ p: 4, maxWidth: 500, width: "100%" }} elevation={3}>
+      <Paper
+        sx={{
+          p: 4,
+          maxWidth: 500,
+          width: "100%",
+        }}
+        elevation={3}
+      >
         <Typography variant="h5" mb={2}>
-          {existingProfile ? "Edit Profile" : "Create Profile"}
+          {isEditMode ? "Edit Profile" : "Create Profile"}
         </Typography>
 
-        <Stack spacing={2} component="form" onSubmit={handleSubmit}>
-          {formError && <Alert severity="error">{formError}</Alert>}
-          {error && <Alert severity="error">{error}</Alert>}
-          {successMessage && (
-            <Alert severity="success">{successMessage}</Alert>
-          )}
+        {formMessage && (
+          <Alert severity="success" sx={{ mb: 2 }}>
+            {formMessage}
+          </Alert>
+        )}
 
-          <TextField
-            label="First Name"
-            value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
-            required
-            fullWidth
-          />
-          <TextField
-            label="Last Name"
-            value={lastName}
-            onChange={(e) => setLastName(e.target.value)}
-            fullWidth
-          />
-          <TextField
-            label="Email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            fullWidth
-          />
-          <TextField
-            label="Age (optional)"
-            type="number"
-            value={age}
-            onChange={(e) => setAge(e.target.value)}
-            fullWidth
-          />
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
 
-          <Button type="submit" variant="contained" disabled={loading}>
-            {existingProfile ? "Update Profile" : "Create Profile"}
-          </Button>
-        </Stack>
+        <Box component="form" onSubmit={handleSubmit} noValidate>
+          <Stack spacing={2}>
+            <TextField
+              label="First Name"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              required
+              fullWidth
+              error={!!fieldErrors.firstName}
+              helperText={fieldErrors.firstName}
+            />
+
+            <TextField
+              label="Last Name (optional)"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              fullWidth
+            />
+
+            <TextField
+              label="Email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              fullWidth
+              error={!!fieldErrors.email}
+              helperText={fieldErrors.email}
+            />
+
+            <TextField
+              label="Age (optional)"
+              type="number"
+              value={age}
+              onChange={(e) => setAge(e.target.value)}
+              fullWidth
+              error={!!fieldErrors.age}
+              helperText={fieldErrors.age}
+            />
+
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={loading}
+            >
+              {isEditMode ? "Update Profile" : "Create Profile"}
+            </Button>
+          </Stack>
+        </Box>
       </Paper>
     </Box>
   );

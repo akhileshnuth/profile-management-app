@@ -1,49 +1,116 @@
 import type { Profile } from "../types/profile";
 
-const PROFILE_KEY = "profileData";
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
 
-// Read base URL from env (just for assignment requirement)
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
+const PROFILE_URL = `${API_BASE_URL}/profile`;
+const LOCAL_KEY = "profileData";
 
-function simulateDelay(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-// Randomly fail sometimes to test error handling (10% chance)
-function maybeFail() {
-  const shouldFail = Math.random() < 0.1;
-  if (shouldFail) {
-    throw new Error("Server error occurred");
+// LocalStorage helpers
+function saveToLocal(profile: Profile | null) {
+  if (profile) {
+    localStorage.setItem(LOCAL_KEY, JSON.stringify(profile));
+  } else {
+    localStorage.removeItem(LOCAL_KEY);
   }
 }
 
-export async function createOrUpdateProfile(profile: Profile): Promise<Profile> {
-  console.log("Using API base URL:", API_BASE_URL);
-
-  await simulateDelay(500);
-  maybeFail();
-
-  localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
-  return profile;
-}
-
-export async function getProfile(): Promise<Profile> {
-  await simulateDelay(500);
-  maybeFail();
-
-  const raw = localStorage.getItem(PROFILE_KEY);
-  if (!raw) {
-    const error: any = new Error("Profile not found");
-    error.status = 404;
-    throw error;
+function loadFromLocal(): Profile | null {
+  const raw = localStorage.getItem(LOCAL_KEY);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as Profile;
+  } catch {
+    return null;
   }
-
-  return JSON.parse(raw) as Profile;
 }
 
+/**
+ * Get profile from API (json-server) with localStorage fallback.
+ *
+ * json-server example db.json:
+ * {
+ *   "profile": {
+ *     "firstName": "Demo",
+ *     "lastName": "User",
+ *     "email": "demo@example.com",
+ *     "age": 25
+ *   }
+ * }
+ *
+ * Run:
+ * npx json-server --watch db.json --port 3001
+ */
+export async function getProfile(): Promise<Profile | null> {
+  try {
+    const res = await fetch(PROFILE_URL, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+
+    if (res.status === 404) {
+      saveToLocal(null);
+      return null;
+    }
+
+    if (!res.ok) {
+      throw new Error("Failed to fetch profile");
+    }
+
+    const data = (await res.json()) as Profile;
+    saveToLocal(data);
+    return data;
+  } catch (error) {
+    // Fallback to localStorage if API fails
+    return loadFromLocal();
+  }
+}
+
+/**
+ * Create or update profile using PUT on /profile.
+ * json-server will replace the "profile" object.
+ */
+export async function createOrUpdateProfile(
+  profile: Profile
+): Promise<Profile> {
+  try {
+    const res = await fetch(PROFILE_URL, {
+      method: "PUT", // PUT because we manage a single profile resource
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(profile),
+    });
+
+    if (!res.ok) {
+      throw new Error("Failed to save profile");
+    }
+
+    const data = (await res.json()) as Profile;
+    saveToLocal(data);
+    return data;
+  } catch (error) {
+    // Still persist locally even if API fails
+    saveToLocal(profile);
+    return profile;
+  }
+}
+
+/**
+ * Delete profile from API and localStorage.
+ */
 export async function deleteProfile(): Promise<void> {
-  await simulateDelay(300);
-  maybeFail();
+  try {
+    const res = await fetch(PROFILE_URL, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+    });
 
-  localStorage.removeItem(PROFILE_KEY);
+    if (!res.ok && res.status !== 404) {
+      throw new Error("Failed to delete profile");
+    }
+
+    saveToLocal(null);
+  } catch (error) {
+    // At least clear local copy
+    saveToLocal(null);
+  }
 }

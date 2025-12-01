@@ -1,33 +1,37 @@
 import { useEffect, useState } from "react";
 import {
+  Alert,
   Box,
-  Typography,
-  Paper,
   Button,
   CircularProgress,
-  Alert,
-  Stack,
   Dialog,
-  DialogTitle,
+  DialogActions,
   DialogContent,
   DialogContentText,
-  DialogActions,
+  DialogTitle,
+  Paper,
+  Stack,
+  Typography,
 } from "@mui/material";
-import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import type { AppDispatch } from "../store/store";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { fetchProfile, removeProfile, clearError } from "../store/profileSlice";
 
 export default function ProfilePage() {
-  const dispatch = useDispatch<AppDispatch>();
+  const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
-  const { data, loading, error } = useSelector((state: any) => state.profile);
+  const { data, loading, error } = useAppSelector((state) => state.profile);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   useEffect(() => {
     dispatch(fetchProfile());
   }, [dispatch]);
+
+  const handleCreateProfile = () => {
+    dispatch(clearError());
+    navigate("/profile-form");
+  };
 
   const handleDeleteClick = () => {
     setConfirmOpen(true);
@@ -40,11 +44,6 @@ export default function ProfilePage() {
 
   const handleCancelDelete = () => {
     setConfirmOpen(false);
-  };
-
-  const handleCreateProfile = () => {
-    dispatch(clearError());
-    navigate("/profile-form");
   };
 
   if (loading && !data) {
@@ -64,14 +63,13 @@ export default function ProfilePage() {
 
         {error && (
           <Alert
-            severity={error.includes("not found") ? "info" : "error"}
+            severity={error.toLowerCase().includes("not found") ? "info" : "error"}
             sx={{ mb: 2 }}
           >
             {error}
           </Alert>
         )}
 
-        {/* If no profile at all */}
         {!data && !loading && (
           <Stack spacing={2}>
             <Typography>No profile exists. Please create one.</Typography>
@@ -81,7 +79,6 @@ export default function ProfilePage() {
           </Stack>
         )}
 
-        {/* Profile details */}
         {data && (
           <Stack spacing={2}>
             <Typography>
@@ -96,8 +93,13 @@ export default function ProfilePage() {
               </Typography>
             )}
 
-            {/* Only Delete here – Edit handled via Navbar */}
             <Box sx={{ display: "flex", gap: 2, mt: 2 }}>
+              <Button
+                variant="outlined"
+                onClick={() => navigate("/profile-form")}
+              >
+                Edit Profile
+              </Button>
               <Button
                 variant="contained"
                 color="error"
@@ -115,13 +117,12 @@ export default function ProfilePage() {
           </Box>
         )}
 
-        {/* Delete confirmation dialog */}
         <Dialog open={confirmOpen} onClose={handleCancelDelete}>
           <DialogTitle>Delete Profile</DialogTitle>
           <DialogContent>
             <DialogContentText>
-              Are you sure you want to delete your profile? This action cannot
-              be undone.
+              Are you sure you want to delete your profile? This action cannot be
+              undone.
             </DialogContentText>
           </DialogContent>
           <DialogActions>

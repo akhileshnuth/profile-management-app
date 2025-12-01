@@ -7,6 +7,6 @@ export const store = configureStore({
   },
 });
 
-// These types help us later in components
+// Inferred types
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
