@@ -133,3 +133,20 @@ This project includes:
 ✔ Error handling
 ✔ Vercel deployment
 ✔ Full README documentation
+
+
+## 🔌 API & Backend Behavior
+
+The app uses a simple abstraction layer for API calls:
+
+- In **development**, it uses `json-server` as a mock backend:
+  - Base URL: `http://localhost:3001`
+  - Endpoints:
+    - `GET /profile`
+    - `PUT /profile`
+    - `DELETE /profile`
+  - These can be seen in DevTools → Network tab.
+
+- In **production** (deployed on Vercel), the app falls back to a **local mock API**:
+  - No real backend is available, so it uses `localStorage` with Promise-based functions.
+  - This satisfies the assignment requirement of using either `json-server` or resolved Promises as a mock API.
